@@ -10,6 +10,7 @@ from flask import render_template, request, jsonify, send_file, flash, url_for, 
 import os
 from werkzeug.utils import secure_filename
 from .forms import UploadForm
+from flask_wtf.csrf import generate_csrf
 
 ###
 # Routing for your application.
@@ -24,11 +25,8 @@ def upload():
     uploadform = UploadForm()
 
     if request.method == 'POST':
-        if not uploadform.validate_on_submit():
-            response = {
-                "errors": form_errors(uploadform)
-            }
-        else:
+        if uploadform.validate_on_submit():
+
             img = uploadform.photo.data
             description = uploadform.description.data
             filename = secure_filename(img.filename)
@@ -38,9 +36,16 @@ def upload():
                 "filename": filename,
                 "description": description
             }
+        else:
+            response = {
+                "errors": form_errors(uploadform)
+            }
+
     return jsonify(response)
 
-
+@app.route('/api/csrf-token', methods=['GET'])
+def get_csrf():
+    return jsonify({'csrf_token': generate_csrf()})
 ###
 # The functions below should be applicable to all Flask apps.
 ###
